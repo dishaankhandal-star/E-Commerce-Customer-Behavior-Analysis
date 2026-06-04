@@ -4,68 +4,91 @@ import matplotlib.pyplot as plt
 import sqlite3
 import os
 
-# -----------------------------
-# Create output folder
-# -----------------------------
+# Create Output Folder
+
 os.makedirs("output", exist_ok=True)
 
-# -----------------------------
+
 # Load Dataset
-# -----------------------------
-df = pd.read_csv("data/Online Retail.csv", encoding="ISO-8859-1")
+
+
+print("Loading Dataset...")
+
+df = pd.read_excel(
+    "data/online_retail_II.xlsx",
+    sheet_name="Year 2010-2011"
+)
 
 print("Dataset Loaded Successfully")
-print(df.head())
 
-# -----------------------------
+
+# Basic Information
+
+
+print("\nDataset Shape:")
+print(df.shape)
+
+print("\nColumns:")
+print(df.columns.tolist())
+
+
 # Data Cleaning
-# -----------------------------
-df.dropna(subset=['CustomerID'], inplace=True)
 
-df = df[df['Quantity'] > 0]
-df = df[df['UnitPrice'] > 0]
 
-df['CustomerID'] = df['CustomerID'].astype(int)
+print("\nCleaning Data...")
 
-# -----------------------------
-# Create Revenue Column
-# -----------------------------
-df['Revenue'] = df['Quantity'] * df['UnitPrice']
+df.dropna(subset=["Customer ID"], inplace=True)
 
-# -----------------------------
-# Convert Date Column
-# -----------------------------
-df['InvoiceDate'] = pd.to_datetime(df['InvoiceDate'])
+df = df[df["Quantity"] > 0]
+df = df[df["Price"] > 0]
 
-df['Month'] = df['InvoiceDate'].dt.to_period('M')
+df["Customer ID"] = df["Customer ID"].astype(int)
 
-# -----------------------------
-# Monthly Sales Analysis
-# -----------------------------
-monthly_sales = df.groupby('Month')['Revenue'].sum()
+# Revenue Calculation
 
-plt.figure(figsize=(10,5))
+
+df["Revenue"] = df["Quantity"] * df["Price"]
+
+
+# Date Processing
+
+
+df["InvoiceDate"] = pd.to_datetime(df["InvoiceDate"])
+
+df["Month"] = df["InvoiceDate"].dt.to_period("M")
+
+# Monthly Revenue Analysis
+
+
+monthly_sales = df.groupby("Month")["Revenue"].sum()
+
+plt.figure(figsize=(12,6))
 monthly_sales.plot()
+
 plt.title("Monthly Revenue Trend")
 plt.xlabel("Month")
 plt.ylabel("Revenue")
 plt.grid(True)
 
+plt.tight_layout()
 plt.savefig("output/monthly_sales.png")
 plt.close()
 
-# -----------------------------
-# Top Products Analysis
-# -----------------------------
+print("Monthly Revenue Graph Saved")
+
+
+# Top 10 Products
+
+
 top_products = (
-    df.groupby('Description')['Revenue']
+    df.groupby("Description")["Revenue"]
     .sum()
     .sort_values(ascending=False)
     .head(10)
 )
 
-plt.figure(figsize=(10,5))
-top_products.plot(kind='bar')
+plt.figure(figsize=(12,6))
+top_products.plot(kind="bar")
 
 plt.title("Top 10 Products by Revenue")
 plt.ylabel("Revenue")
@@ -74,18 +97,21 @@ plt.tight_layout()
 plt.savefig("output/top_products.png")
 plt.close()
 
-# -----------------------------
-# Country Wise Sales
-# -----------------------------
+print("Top Products Graph Saved")
+
+
+# Country Wise Revenue
+
+
 country_sales = (
-    df.groupby('Country')['Revenue']
+    df.groupby("Country")["Revenue"]
     .sum()
     .sort_values(ascending=False)
     .head(10)
 )
 
-plt.figure(figsize=(10,5))
-country_sales.plot(kind='bar')
+plt.figure(figsize=(12,6))
+country_sales.plot(kind="bar")
 
 plt.title("Top Countries by Revenue")
 plt.ylabel("Revenue")
@@ -94,29 +120,34 @@ plt.tight_layout()
 plt.savefig("output/country_sales.png")
 plt.close()
 
-# -----------------------------
+print("Country Revenue Graph Saved")
+
+
 # Customer Segmentation
-# -----------------------------
+
 customer_sales = (
-    df.groupby('CustomerID')['Revenue']
+    df.groupby("Customer ID")["Revenue"]
     .sum()
 )
 
 customer_segments = pd.DataFrame(customer_sales)
 
-customer_segments['Segment'] = pd.qcut(
-    customer_segments['Revenue'],
+customer_segments["Segment"] = pd.qcut(
+    customer_segments["Revenue"],
     q=3,
-    labels=['Low Value','Medium Value','High Value']
+    labels=["Low Value", "Medium Value", "High Value"]
 )
 
 customer_segments.to_csv(
     "output/customer_segments.csv"
 )
 
-# -----------------------------
-# Save To SQL Database
-# -----------------------------
+print("Customer Segmentation File Saved")
+
+
+# Store Data in SQL Database
+
+
 conn = sqlite3.connect("ecommerce.db")
 
 df.to_sql(
@@ -128,31 +159,32 @@ df.to_sql(
 
 conn.close()
 
-# -----------------------------
-# Insights
-# -----------------------------
-print("\n----- PROJECT INSIGHTS -----")
+print("Database Created Successfully")
+
+# Final Insights
+
+
+print("\n========== PROJECT INSIGHTS ==========")
 
 print(
-    "\nTotal Revenue:",
-    round(df['Revenue'].sum(),2)
+    "\nTotal Revenue Generated:",
+    round(df["Revenue"].sum(), 2)
 )
 
 print(
     "\nTotal Customers:",
-    df['CustomerID'].nunique()
+    df["Customer ID"].nunique()
 )
 
 print(
-    "\nTop Product:"
+    "\nTotal Products:",
+    df["Description"].nunique()
 )
 
+print("\nTop Product By Revenue:")
 print(top_products.head(1))
 
-print(
-    "\nTop Country:"
-)
-
+print("\nTop Country By Revenue:")
 print(country_sales.head(1))
 
-print("\nProject Completed Successfully")
+print("\nProject Completed Successfully!")
