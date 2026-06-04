@@ -1,8 +1,2 @@
 # E-Commerce-Customer-Behavior-Analysis
 
-Dataset Source:
-https://www.kaggle.com/datasets/lakshmi25npathi/online-retail-dataset
-
-Download the dataset and place it inside:
-
-data/Online Retail.csv
